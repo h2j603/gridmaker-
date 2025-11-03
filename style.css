@@ -76,7 +76,6 @@ body { font-family: "Pretendard", -apple-system, BlinkMacSystemFont, 'Segoe UI',
   bottom: 20px;
   display: grid;
   min-height: 360px; /* 500px -> 360px */
-  grid-auto-flow: dense;
   grid-auto-rows: minmax(60px, auto); /* 자동 행 높이 추가 */
 }
 .canvas-viewport.mobile-view .grid-container {
