@@ -298,7 +298,7 @@ function renderCanvas() {
         moduleFlexStyles = `
           display: flex;
           align-items: ${moduleData.verticalAlign || 'flex-start'};
-          padding: 10px; 
+          padding: 0; 
         `;
         innerHTML = `<p class="module-content" style="${textStyles}">${escapeHTML(moduleData.textContent || '')}</p>`; 
       }
@@ -999,7 +999,7 @@ function generateCSS() {
   margin: 0;
   background: whitesmoke;
   font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  padding: ${layers.length > 0 ? getSortedLayers()[0].settings.desktopGap : 10}px;
+  padding: 0;
 }
 .grid-viewport-wrapper {
   position: relative;
@@ -1009,24 +1009,24 @@ function generateCSS() {
 .grid-container {
   display: grid;
   position: relative;
-  margin-bottom: 20px;
+  margin-bottom: 0;
   pointer-events: none;
   grid-auto-flow: dense; 
-  grid-auto-rows: minmax(60px, auto);
+  grid-auto-rows: minmax(0, auto);
 }
 .grid-container .module {
   pointer-events: auto; 
 }
 
 .module {
-  min-height: 60px;
+  min-height: 0;
 }
 .module.type-image { background: #e0e0e0; }
 .module.type-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 .module.type-box { 
   display: flex;
-  padding: 10px;
+  padding: 0;
 }
 .module.type-box p {
   font-size: 14px;
@@ -1073,7 +1073,7 @@ function generateCSS() {
         moduleSpecificStyles = `
   display: flex;
   align-items: ${m.verticalAlign || 'flex-start'};
-  padding: 10px;`;
+  padding: 0;`;
       }
 
       css += `.module-${m.id} {
