@@ -10,229 +10,229 @@
 <body>
 
 <div class="container">
-  <div class="header">
-    <h1>Grid Maker</h1>
-    <p>레이어 + 컴포넌트 + 히스토리 + 그룹화 기능</p>
-  </div>
+  <div class="header">
+    <h1>Grid Maker</h1>
+    <p>레이어 + 컴포넌트 + 히스토리 + 그룹화 기능</p>
+  </div>
 
-  <div class="view-toggle">
-    <button class="view-btn active" onclick="switchView('desktop')">🖥️ 데스크톱</button>
-    <button class="view-btn" onclick="switchView('mobile')">📱 모바일 프리뷰</button>
-  </div>
+  <div class="view-toggle">
+    <button class="view-btn active" onclick="switchView('desktop')">🖥️ 데스크톱</button>
+    <button class="view-btn" onclick="switchView('mobile')">📱 모바일 프리뷰</button>
+  </div>
 
-  <div class="workspace">
-    <div class="panel">
+  <div class="workspace">
+    <div class="panel">
 
-      <div class="control-group" id="layer-panel">
-        <h3>🎨 레이어 (우선순위로 순서 변경)</h3>
-        <ul id="layer-list">
-        </ul>
-        <div class="btn-group" style="margin-top: 12px;">
-          <button class="btn btn-secondary" onclick="addLayer()">➕ 새 레이어</button>
-          <button class="btn btn-secondary" onclick="deleteActiveLayer()">🗑️ 활성 레이어 삭제</button>
-        </div>
-      </div>
+      <div class="control-group" id="layer-panel">
+        <h3>🎨 레이어 (우선순위로 순서 변경)</h3>
+        <ul id="layer-list">
+        </ul>
+        <div class="btn-group" style="margin-top: 12px;">
+          <button class="btn btn-secondary" onclick="addLayer()">➕ 새 레이어</button>
+          <button class="btn btn-secondary" onclick="deleteActiveLayer()">🗑️ 활성 레이어 삭제</button>
+        </div>
+      </div>
 
-      <div class="control-group">
-        <h3>📊 데스크톱 설정</h3>
-        
-        <label class="control-label">레이어 블렌드 모드</label>
-        <select id="layer-blend-mode" class="control-select" style="margin-bottom: 12px;">
-          <option value="normal">Normal (일반)</option>
-          <option value="multiply">Multiply (곱하기)</option>
-          <option value="screen">Screen (스크린)</option>
-          <option value="overlay">Overlay (오버레이)</option>
-          <option value="darken">Darken (어둡게 하기)</option>
-          <option value="lighten">Lighten (밝게 하기)</option>
-          <option value="color-dodge">Color Dodge (컬러 닷지)</option>
-          <option value="color-burn">Color Burn (컬러 번)</option>
-          <option value="hard-light">Hard Light (하드 라이트)</option>
-          <option value="soft-light">Soft Light (소프트 라이트)</option>
-          <option value="difference">Difference (차이)</option>
-          <option value="exclusion">Exclusion (제외)</option>
-          <option value="hue">Hue (색조)</option>
-          <option value="saturation">Saturation (채도)</option>
-          <option value="color">Color (색상)</option>
-          <option value="luminosity">Luminosity (광도)</option>
-        </select>
-        
-        <div class="stats">
-          <div class="stats-item"><span>컬럼</span><span id="stat-columns">6개</span></div>
-          <div class="stats-item"><span>갭</span><span id="stat-gap">10px</span></div>
-          <div class="stats-item"><span>모듈 (활성)</span><span id="stat-modules">0개</span></div>
-        </div>
-        <label class="control-label">컬럼 수</label>
-        <input type="number" id="columns" class="control-input" min="1" max="12" value="6">
-        <label class="control-label" style="margin-top: 12px">갭 크기 (px)</label>
-        <input type="number" id="gap" class="control-input" min="0" max="50" value="10">
+      <div class="control-group">
+        <h3>📊 데스크톱 설정</h3>
+        
+        <label class="control-label">레이어 블렌드 모드</label>
+        <select id="layer-blend-mode" class="control-select" style="margin-bottom: 12px;">
+          <option value="normal">Normal (일반)</option>
+          <option value="multiply">Multiply (곱하기)</option>
+          <option value="screen">Screen (스크린)</option>
+          <option value="overlay">Overlay (오버레이)</option>
+          <option value="darken">Darken (어둡게 하기)</option>
+          <option value="lighten">Lighten (밝게 하기)</option>
+          <option value="color-dodge">Color Dodge (컬러 닷지)</option>
+          <option value="color-burn">Color Burn (컬러 번)</option>
+          <option value="hard-light">Hard Light (하드 라이트)</option>
+          <option value="soft-light">Soft Light (소프트 라이트)</option>
+          <option value="difference">Difference (차이)</option>
+          <option value="exclusion">Exclusion (제외)</option>
+          <option value="hue">Hue (색조)</option>
+          <option value="saturation">Saturation (채도)</option>
+          <option value="color">Color (색상)</option>
+          <option value="luminosity">Luminosity (광도)</option>
+        </select>
+        
+        <div class="stats">
+          <div class="stats-item"><span>컬럼</span><span id="stat-columns">6개</span></div>
+          <div class="stats-item"><span>갭</span><span id="stat-gap">10px</span></div>
+          <div class="stats-item"><span>모듈 (활성)</span><span id="stat-modules">0개</span></div>
+        </div>
+        <label class="control-label">컬럼 수</label>
+        <input type="number" id="columns" class="control-input" min="1" max="12" value="6">
+        <label class="control-label" style="margin-top: 12px">갭 크기 (px)</label>
+        <input type="number" id="gap" class="control-input" min="0" max="50" value="10">
 
-        <label class="control-label" style="margin-top: 12px">캔버스 배율</label>
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <input type="range" id="canvas-scale" class="control-input" min="25" max="150" value="100" style="flex-grow: 1; padding: 0;">
-          <span id="scale-readout" style="font-size: 0.9em; width: 45px; text-align: right;">100%</span>
-        </div>
-        
-                <div style="display: flex; align-items: center; gap: 5px; margin-top: 12px;">
-          <input type="checkbox" id="global-aspect-ratio">
-          <label for="global-aspect-ratio" style="font-size: 0.9em;">📐 정사각형 셀 비율 유지 (전체)</label>
-        </div>
-      </div>
+        <label class="control-label" style="margin-top: 12px">캔버스 배율</label>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <input type="range" id="canvas-scale" class="control-input" min="25" max="150" value="100" style="flex-grow: 1; padding: 0;">
+          <span id="scale-readout" style="font-size: 0.9em; width: 45px; text-align: right;">100%</span>
+        </div>
+        
+                <div style="display: flex; align-items: center; gap: 5px; margin-top: 12px;">
+          <input type="checkbox" id="global-aspect-ratio">
+          <label for="global-aspect-ratio" style="font-size: 0.9em;">📐 정사각형 셀 비율 유지 (전체)</label>
+        </div>
+      </div>
 
-      <div class="control-group">
-        <h3>➕ 커스텀 모듈 추가</h3>
-        <p class="hint-text" id="add-module-hint" style="margin-bottom: 10px;"></p>
-        <label class="control-label">모듈 타입</label>
-        <select id="custom-type" class="control-select" style="margin-bottom: 8px;">
-          <option value="box" selected>Box / Text (컨테이너)</option>
-          <option value="image">Image (이미지)</option>
-        </select>
-        <div class="input-group">
-          <input type="number" id="custom-col" class="control-input" placeholder="컬럼" min="1" value="2">
-          <input type="number" id="custom-row" class="control-input" placeholder="로우" min="1" value="2">
-        </div>
-        <label class="control-label" style="margin-top: 8px">배경색</label>
-        <input type="color" id="custom-color" class="control-input" value="#8c6c3c" style="height: 40px; cursor: pointer;">
-        <div style="display: flex; align-items: center; gap: 5px; margin-top: 5px;">
-          <input type="checkbox" id="custom-transparent" onchange="toggleColorPicker('custom', this.checked)">
-          <label for="custom-transparent" style="font-size: 0.85em;">배경 투명</label>
-        </div>
-        <label class="control-label" style="margin-top: 12px">윤곽선 색</label>
-        <input type="color" id="custom-border-color" class="control-input" value="#000000" style="height: 40px; cursor: pointer;">
-        <label class="control-label" style="margin-top: 12px">윤곽선 두께 (px)</label>
-        <input type="number" id="custom-border-width" class="control-input" value="0" min="0" max="20">
-        <button class="btn btn-primary" id="add-module-btn" onclick="addCustomModule()" style="margin-top: 12px">모듈 추가</button>
-      </div>
+      <div class="control-group">
+        <h3>➕ 커스텀 모듈 추가</h3>
+        <p class="hint-text" id="add-module-hint" style="margin-bottom: 10px;"></p>
+        <label class="control-label">모듈 타입</label>
+        <select id="custom-type" class="control-select" style="margin-bottom: 8px;">
+          <option value="box" selected>Box / Text (컨테이너)</option>
+          <option value="image">Image (이미지)</option>
+        </select>
+        <div class="input-group">
+          <input type="number" id="custom-col" class="control-input" placeholder="컬럼" min="1" value="2">
+          <input type="number" id="custom-row" class="control-input" placeholder="로우" min="1" value="2">
+        </div>
+        <label class="control-label" style="margin-top: 8px">배경색</label>
+        <input type="color" id="custom-color" class="control-input" value="#8c6c3c" style="height: 40px; cursor: pointer;">
+        <div style="display: flex; align-items: center; gap: 5px; margin-top: 5px;">
+          <input type="checkbox" id="custom-transparent" onchange="toggleColorPicker('custom', this.checked)">
+          <label for="custom-transparent" style="font-size: 0.85em;">배경 투명</label>
+        </div>
+        <label class="control-label" style="margin-top: 12px">윤곽선 색</label>
+        <input type="color" id="custom-border-color" class="control-input" value="#000000" style="height: 40px; cursor: pointer;">
+        <label class="control-label" style="margin-top: 12px">윤곽선 두께 (px)</label>
+        <input type="number" id="custom-border-width" class="control-input" value="0" min="0" max="20">
+        <button class="btn btn-primary" id="add-module-btn" onclick="addCustomModule()" style="margin-top: 12px">모듈 추가</button>
+      </div>
 
-      <div class="control-group" id="edit-panel" style="display: none;">
-        <h3>✏️ 모듈 편집</h3>
-        <label class="control-label">모듈 타입</label>
-        <select id="edit-type" class="control-select" style="margin-bottom: 12px;">
-          <option value="box">Box / Text (컨테이너)</option>
-          <option value="image">Image (이미지)</option>
-        </select>
-        <label class="control-label">Group ID (그룹화)</label>
-        <input type="text" id="edit-group-id" class="control-input" placeholder="예: header-group">
+      <div class="control-group" id="edit-panel" style="display: none;">
+        <h3>✏️ 모듈 편집</h3>
+        <label class="control-label">모듈 타입</label>
+        <select id="edit-type" class="control-select" style="margin-bottom: 12px;">
+          <option value="box">Box / Text (컨테이너)</option>
+          <option value="image">Image (이미지)</option>
+        </select>
+        <label class="control-label">Group ID (그룹화)</label>
+        <input type="text" id="edit-group-id" class="control-input" placeholder="예: header-group">
 
-        <label class="control-label" style="margin-top: 12px">데스크톱 컬럼 span</label>
-        <input type="number" id="edit-col" class="control-input" min="1" max="12">
-        <label class="control-label" style="margin-top: 12px">데스크톱 로우 span</label>
-        <input type="number" id="edit-row" class="control-input" min="1" max="10">
-        <label class="control-label" style="margin-top: 12px">모바일 컬럼 span (선택)</label>
-        <input type="number" id="edit-mobile-col" class="control-input" min="1" max="12" placeholder="비워두면 자동">
-        <div class="hint-text" id="mobile-span-hint">자동: 비율 계산</div>
+        <label class="control-label" style="margin-top: 12px">데스크톱 컬럼 span</label>
+        <input type="number" id="edit-col" class="control-input" min="1" max="12">
+        <label class="control-label" style="margin-top: 12px">데스크톱 로우 span</label>
+        <input type="number" id="edit-row" class="control-input" min="1" max="10">
+        <label class="control-label" style="margin-top: 12px">모바일 컬럼 span (선택)</label>
+        <input type="number" id="edit-mobile-col" class="control-input" min="1" max="12" placeholder="비워두면 자동">
+        <div class="hint-text" id="mobile-span-hint">자동: 비율 계산</div>
 
-        <div id="text-options-panel" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee;">
-          <h4 style="font-size: 0.9em; font-weight: 600; margin-bottom: 10px;">🖊️ 텍스트 옵션</h4>
-          <label class="control-label">가로 정렬</label>
-          <select id="edit-text-align" class="control-select" style="margin-bottom: 8px;">
-            <option value="left">왼쪽</option>
-            <option value="center">가운데</option>
-            <option value="right">오른쪽</option>
-          </select>
-          
-          <label class="control-label">세로 정렬 (Align)</label>
-          <select id="edit-vertical-align" class="control-select" style="margin-bottom: 8px;">
-            <option value="flex-start">위</option>
-            <option value="center">중앙</option>
-            <option value="flex-end">아래</option>
-          </select>
+        <div id="text-options-panel" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee;">
+          <h4 style="font-size: 0.9em; font-weight: 600; margin-bottom: 10px;">🖊️ 텍스트 옵션</h4>
+          <label class="control-label">가로 정렬</label>
+          <select id="edit-text-align" class="control-select" style="margin-bottom: 8px;">
+            <option value="left">왼쪽</option>
+            <option value="center">가운데</option>
+            <option value="right">오른쪽</option>
+          </select>
+          
+          <label class="control-label">세로 정렬 (Align)</label>
+          <select id="edit-vertical-align" class="control-select" style="margin-bottom: 8px;">
+            <option value="flex-start">위</option>
+            <option value="center">중앙</option>
+            <option value="flex-end">아래</option>
+          </select>
 
-          <label class="control-label">폰트 색상</label>
-          <input type="color" id="edit-font-color" class="control-input" style="height: 40px; cursor: pointer; margin-bottom: 8px;">
-          
-          <label class="control-label">폰트 크기 (px)</label>
-          <input type="number" id="edit-font-size" class="control-input" min="8" max="100" placeholder="기본 (14px)">
-          
-          <label class="control-label" style="margin-top: 8px">폰트 굵기</label>
-          <select id="edit-font-weight" class="control-select" style="margin-bottom: 8px;">
-            <option value="100">100 - Thin</option>
-            <option value="200">200 - Extra Light</option>
-            <option value="300">300 - Light</option>
-            <option value="400" selected>400 - Regular</option>
-            <option value="500">500 - Medium</option>
-            <option value="600">600 - Semi Bold</option>
-            <option value="700">700 - Bold</option>
-            <option value="800">800 - Extra Bold</option>
-            <option value="900">900 - Black</option>
-          </select>
-          
-          <label class="control-label" style="margin-top: 8px">텍스트 내용</label>
-          <textarea id="edit-text-content" class="control-input" rows="3" style="font-family: inherit; white-space: pre-wrap;"></textarea>
-        </div>
+          <label class="control-label">폰트 색상</label>
+          <input type="color" id="edit-font-color" class="control-input" style="height: 40px; cursor: pointer; margin-bottom: 8px;">
+          
+          <label class="control-label">폰트 크기 (px)</label>
+          <input type="number" id="edit-font-size" class="control-input" min="8" max="100" placeholder="기본 (14px)">
+          
+          <label class="control-label" style="margin-top: 8px">폰트 굵기</label>
+          <select id="edit-font-weight" class="control-select" style="margin-bottom: 8px;">
+            <option value="100">100 - Thin</option>
+            <option value="200">200 - Extra Light</option>
+            <option value="300">300 - Light</option>
+            <option value="400" selected>400 - Regular</option>
+            <option value="500">500 - Medium</option>
+            <option value="600">600 - Semi Bold</option>
+            <option value="700">700 - Bold</option>
+            <option value="800">800 - Extra Bold</option>
+            <option value="900">900 - Black</option>
+          </select>
+          
+          <label class="control-label" style="margin-top: 8px">텍스트 내용</label>
+          <textarea id="edit-text-content" class="control-input" rows="3" style="font-family: inherit; white-space: pre-wrap;"></textarea>
+        </div>
 
-                        <label class="control-label" style="margin-top: 12px">배경색</label>
-        <input type="color" id="edit-color" class="control-input" style="height: 40px; cursor: pointer;">
-        <div style="display: flex; align-items: center; gap: 5px; margin-top: 5px;">
-          <input type="checkbox" id="edit-transparent" onchange="toggleColorPicker('edit', this.checked)">
-          <label for="edit-transparent" style="font-size: 0.85em;">배경 투명</label>
-        </div>
-        <label class="control-label" style="margin-top: 12px">윤곽선 색</label>
-        <input type="color" id="edit-border-color" class="control-input" value="#000000" style="height: 40px; cursor: pointer;">
-        <label class="control-label" style="margin-top: 12px">윤곽선 두께 (px)</label>
-        <input type="number" id="edit-border-width" class="control-input" value="0" min="0" max="20">
-        
-        <div class="control-group" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee;">
-            <label class="control-label">모듈 분할 (Split)</label>
-            <div class="input-group">
-                <input type="number" id="split-h" class="control-input" placeholder="가로 n" min="1" value="1">
-                <input type="number" id="split-v" class="control-input" placeholder="세로 n" min="1" value="1">
-            </div>
-            <button class="btn btn-secondary" style="margin-top: 8px" onclick="splitSelectedModule()">선택 모듈 분할</button>
-                        <button class="btn btn-secondary" style="margin-top: 8px" onclick="mergeSelectedModules()">🧬 그룹 모듈 병합</button>
-        </div>
-        
-        <button class="btn btn-secondary" style="margin-top: 12px" onclick="deleteSelectedModule()">🗑️ 선택 모듈 삭제</button>
-      </div>
+                        <label class="control-label" style="margin-top: 12px">배경색</label>
+        <input type="color" id="edit-color" class="control-input" style="height: 40px; cursor: pointer;">
+        <div style="display: flex; align-items: center; gap: 5px; margin-top: 5px;">
+          <input type="checkbox" id="edit-transparent" onchange="toggleColorPicker('edit', this.checked)">
+          <label for="edit-transparent" style="font-size: 0.85em;">배경 투명</label>
+        </div>
+        <label class="control-label" style="margin-top: 12px">윤곽선 색</label>
+        <input type="color" id="edit-border-color" class="control-input" value="#000000" style="height: 40px; cursor: pointer;">
+        <label class="control-label" style="margin-top: 12px">윤곽선 두께 (px)</label>
+        <input type="number" id="edit-border-width" class="control-input" value="0" min="0" max="20">
+        
+        <div class="control-group" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee;">
+            <label class="control-label">모듈 분할 (Split)</label>
+            <div class="input-group">
+                <input type="number" id="split-h" class="control-input" placeholder="가로 n" min="1" value="1">
+                <input type="number" id="split-v" class="control-input" placeholder="세로 n" min="1" value="1">
+            </div>
+            <button class="btn btn-secondary" style="margin-top: 8px" onclick="splitSelectedModule()">선택 모듈 분할</button>
+                        <button class="btn btn-secondary" style="margin-top: 8px" onclick="mergeSelectedModules()">🧬 그룹 모듈 병합</button>
+        </div>
+        
+        <button class="btn btn-secondary" style="margin-top: 12px" onclick="deleteSelectedModule()">🗑️ 선택 모듈 삭제</button>
+      </div>
 
-      <div class="control-group">
-        <h3>📱 모바일 반응형 모드</h3>
-        <label class="control-label">모바일 목표 컬럼 수</label>
-        <input type="number" id="target-columns" class="control-input" min="1" max="12" value="2">
-        <div class="lock-toggle">
-          <input type="checkbox" id="mobile-order-lock" onchange="toggleMobileOrderLock(event)">
-          <label for="mobile-order-lock">🔒 모바일 순서 동기화</label>
-        </div>
-        <label class="control-label" style="margin-top: 12px">변환 모드</label>
-        <div class="mode-selector">
-          <div class="mode-option selected" onclick="selectMode('reflow')" data-mode="reflow">
-            <div class="mode-option-title">🔄 리플로우</div>
-            <div class="mode-option-desc">순서대로 재배치</div>
-          </div>
-        </div>
-        <div class="mode-hint" id="mode-hint">6열 → 2열로 리플로우</div>
-      </div>
+      <div class="control-group">
+        <h3>📱 모바일 반응형 모드</h3>
+        <label class="control-label">모바일 목표 컬럼 수</label>
+        <input type="number" id="target-columns" class="control-input" min="1" max="12" value="2">
+        <div class="lock-toggle">
+          <input type="checkbox" id="mobile-order-lock" onchange="toggleMobileOrderLock(event)">
+          <label for="mobile-order-lock">🔒 모바일 순서 동기화</label>
+        </div>
+        <label class="control-label" style="margin-top: 12px">변환 모드</label>
+        <div class="mode-selector">
+          <div class="mode-option selected" onclick="selectMode('reflow')" data-mode="reflow">
+            <div class="mode-option-title">🔄 리플로우</div>
+            <div class="mode-option-desc">순서대로 재배치</div>
+          </div>
+        </div>
+        <div class="mode-hint" id="mode-hint">6열 → 2열로 리플로우</div>
+      </div>
 
-      <div class="control-group">
-        <h3>🔧 도구</h3>
-        <div class="btn-group">
-          <button class="btn btn-secondary" id="undo-btn" onclick="undo()" disabled>↩️ 실행 취소</button>
-          <button class="btn btn-secondary" id="redo-btn" onclick="redo()" disabled>↪️ 다시 실행</button>
-        </div>
-        <div style="display: flex; align-items: center; gap: 5px; margin-top: 8px;">
-          <input type="checkbox" id="show-selection" checked>
-          <label for="show-selection" style="font-size: 0.9em;">선택 테두리/호버 보이기</label>
-        </div>
-        <div style="display: flex; align-items: center; gap: 5px; margin-top: 8px;">
-          <input type="checkbox" id="dim-inactive-layers" checked>
-          <label for="dim-inactive-layers" style="font-size: 0.9em;">비활성 레이어 흐리게</label>
-        </div>
-        <button class="btn btn-secondary" onclick="clearActiveLayer()" style="background: #fee2e2; color: #dc2626; margin-top: 8px;">🗑️ 활성 레이어 비우기</button>
-      </div>
-    </div>
+      <div class="control-group">
+        <h3>🔧 도구</h3>
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="undo-btn" onclick="undo()" disabled>↩️ 실행 취소</button>
+          <button class="btn btn-secondary" id="redo-btn" onclick="redo()" disabled>↪️ 다시 실행</button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 5px; margin-top: 8px;">
+          <input type="checkbox" id="show-selection" checked>
+          <label for="show-selection" style="font-size: 0.9em;">선택 테두리/호버 보이기</label>
+        </div>
+        <div style="display: flex; align-items: center; gap: 5px; margin-top: 8px;">
+          <input type="checkbox" id="dim-inactive-layers" checked>
+          <label for="dim-inactive-layers" style="font-size: 0.9em;">비활성 레이어 흐리게</label>
+        </div>
+        <button class="btn btn-secondary" onclick="clearActiveLayer()" style="background: #fee2e2; color: #dc2626; margin-top: 8px;">🗑️ 활성 레이어 비우기</button>
+      </div>
+    </div>
 
-    <div class="canvas-viewport" id="canvas-viewport" onclick="handleCanvasClick(event)">
-    </div>
+    <div class="canvas-viewport" id="canvas-viewport" onclick="handleCanvasClick(event)">
+    </div>
 
-    <div class="panel">
-      <h3>💻 생성된 코드 (모든 레이어)</h3>
-      <div class="code-tabs">
-        <button class="code-tab active" onclick="switchTab('html', event)">HTML</button>
-        <button class="code-tab" onclick="switchTab('css', event)">CSS</button>
-      </div>
-      <div class="code-display" id="code-display"></div>
-      <button class="btn btn-primary" style="margin-top: 12px" onclick="copyCode()">📋 클립보드에 복사</button>
-    </div>
-  </div>
+    <div class="panel">
+      <h3>💻 생성된 코드 (모든 레이어)</h3>
+      <div class="code-tabs">
+        <button class="code-tab active" onclick="switchTab('html', event)">HTML</button>
+        <button class="code-tab" onclick="switchTab('css', event)">CSS</button>
+      </div>
+      <div class="code-display" id="code-display"></div>
+      <button class="btn btn-primary" style="margin-top: 12px" onclick="copyCode()">📋 클립보드에 복사</button>
+    </div>
+  </div>
 </div>
 
 <div id="toast" class="toast" style="display: none;"></div>
