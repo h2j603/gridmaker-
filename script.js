@@ -1,27 +1,21 @@
-// --- [신규] 글로벌 상태 변수 ---
+// --- 글로벌 상태 변수 ---
 let layers = []; 
 let activeLayerId = null;
 let selectedModuleId = null;
-let globalAspectRatio = false; // [신규] 전역 aspect-ratio 설정
+let globalAspectRatio = false;
+let moduleCounter = 1;
 
-// --- [수정] 글로벌 설정 (공통 뷰 상태) ---
 let currentView = 'desktop', activeTab = 'html';
 let showSelection = true;
 let dimInactiveLayers = true; 
-
-// --- [신규] 드래그 상태 변수 ---
 let draggedModuleInfo = null; 
-
-// --- [신규] 히스토리 변수 (레이어 구조 전체 저장) ---
 let history = [];
 let historyIndex = -1;
 
-// --- [신규] 헬퍼: 깊은 복사 ---
 function deepCopy(obj) {
   return JSON.parse(JSON.stringify(obj));
 }
 
-// --- [신규] 헬퍼: HTML 이스케이프 (XSS 방지) ---
 function escapeHTML(str) {
   if (str === null || str === undefined) return '';
   return String(str).replace(/[&<>"']/g, function(m) {
@@ -29,13 +23,11 @@ function escapeHTML(str) {
   });
 }
 
-// --- [신규] 헬퍼: 활성 레이어 가져오기 ---
 function getActiveLayer() {
   if (!activeLayerId) return null;
   return layers.find(l => l.id === activeLayerId);
 }
 
-// --- [신규] 헬퍼: 선택된 모듈 가져오기 ---
 function getSelectedModule() {
   const layer = getActiveLayer();
   if (!layer || selectedModuleId === null) return null;
@@ -47,43 +39,72 @@ function getSelectedModule() {
   return { module, layer }; 
 }
 
-// --- [신규] 헬퍼: Clamp ---
 function clamp(value, min, max) {
   return Math.max(min, Math.min(value, max));
 }
 
-// --- [신규] 헬퍼: 정렬된 레이어 반환 ---
 function getSortedLayers() {
   return [...layers].sort((a, b) => a.priority - b.priority);
 }
 
-// --- [수정] Grid 좌표 시스템 헬퍼 ---
-function createGridMap(layer) {
+function calculateGridPositions(layer) {
   const { settings } = layer;
   const cols = settings.desktopColumns;
   const grid = [];
+  const positions = {};
   
-  // 빈 그리드 생성 (충분히 큰 행 수)
   for (let i = 0; i < 200; i++) {
     grid[i] = new Array(cols).fill(null);
   }
-  
-  // 모듈 배치
-  let currentRow = 0;
-  let currentCol = 0;
   
   layer.desktopOrder.forEach(moduleId => {
     const module = layer.modules.find(m => m.id === moduleId);
     if (!module) return;
     
+    if (module.gridX !== null && module.gridX !== undefined && 
+        module.gridY !== null && module.gridY !== undefined) {
+      
+      let canPlace = true;
+      for (let r = 0; r < module.row && canPlace; r++) {
+        for (let c = 0; c < module.col && canPlace; c++) {
+          const gridRow = module.gridY + r;
+          const gridCol = module.gridX + c;
+          if (gridRow >= grid.length || gridCol >= cols || grid[gridRow][gridCol] !== null) {
+            canPlace = false;
+          }
+        }
+      }
+      
+      if (canPlace) {
+        positions[moduleId] = { gridX: module.gridX, gridY: module.gridY };
+        
+        for (let r = 0; r < module.row; r++) {
+          for (let c = 0; c < module.col; c++) {
+            const gridRow = module.gridY + r;
+            const gridCol = module.gridX + c;
+            if (gridRow < grid.length && gridCol < cols) {
+              grid[gridRow][gridCol] = moduleId;
+            }
+          }
+        }
+      }
+    }
+  });
+  
+  let currentRow = 0;
+  let currentCol = 0;
+  
+  layer.desktopOrder.forEach(moduleId => {
+    const module = layer.modules.find(m => m.id === moduleId);
+    if (!module || positions[moduleId]) return;
+    
     let placed = false;
     let attempts = 0;
-    const maxAttempts = 10000; // 무한 루프 방지
+    const maxAttempts = 10000;
     
     while (!placed && attempts < maxAttempts) {
       attempts++;
       
-      // 빈 공간 찾기
       while (currentRow < grid.length && grid[currentRow][currentCol] !== null) {
         currentCol++;
         if (currentCol >= cols) {
@@ -94,7 +115,6 @@ function createGridMap(layer) {
       
       if (currentRow >= grid.length) break;
       
-      // 모듈이 이 자리에 맞는지 확인
       let fits = true;
       for (let r = 0; r < module.row && fits; r++) {
         for (let c = 0; c < module.col && fits; c++) {
@@ -106,7 +126,6 @@ function createGridMap(layer) {
         }
       }
       
-      // 맞지 않으면 다음 칸으로 이동
       if (!fits) {
         currentCol++;
         if (currentCol >= cols) {
@@ -114,9 +133,8 @@ function createGridMap(layer) {
           currentRow++;
         }
       } else {
-        // 모듈 배치
-        module.gridX = currentCol;
-        module.gridY = currentRow;
+        positions[moduleId] = { gridX: currentCol, gridY: currentRow };
+        
         for (let r = 0; r < module.row; r++) {
           for (let c = 0; c < module.col; c++) {
             if (currentRow + r < grid.length && currentCol + c < cols) {
@@ -130,16 +148,24 @@ function createGridMap(layer) {
     
     if (!placed) {
       console.warn('Failed to place module:', module.id);
-      module.gridX = 0;
-      module.gridY = currentRow;
+      positions[moduleId] = { gridX: 0, gridY: currentRow };
     }
   });
   
-  return grid;
+  return positions;
 }
 
+function recalculateAllPositions(layer) {
+  const positions = calculateGridPositions(layer);
+  
+  layer.modules.forEach(module => {
+    if (positions[module.id]) {
+      module.gridX = positions[module.id].gridX;
+      module.gridY = positions[module.id].gridY;
+    }
+  });
+}
 
-// === [수정] 상태 저장 (Undo/Redo) ---
 function saveState() {
   if (historyIndex < history.length - 1) {
     history.splice(historyIndex + 1);
@@ -148,7 +174,8 @@ function saveState() {
     layers: deepCopy(layers),
     activeLayerId: activeLayerId,
     selectedModuleId: selectedModuleId,
-    globalAspectRatio: globalAspectRatio
+    globalAspectRatio: globalAspectRatio,
+    moduleCounter: moduleCounter
   };
   history.push(state);
   historyIndex = history.length - 1;
@@ -159,7 +186,6 @@ function saveState() {
   updateUndoRedoButtons();
 }
 
-// === [수정] 상태 불러오기 (Undo/Redo) ---
 function loadState(state) {
   if (!state) return;
   
@@ -167,6 +193,7 @@ function loadState(state) {
   activeLayerId = state.activeLayerId;
   selectedModuleId = state.selectedModuleId;
   globalAspectRatio = state.globalAspectRatio || false;
+  moduleCounter = state.moduleCounter || 1;
   document.getElementById('global-aspect-ratio').checked = globalAspectRatio;
 
   if (!getActiveLayer() && layers.length > 0) {
@@ -198,7 +225,6 @@ function updateUndoRedoButtons() {
   document.getElementById('redo-btn').disabled = (historyIndex >= history.length - 1);
 }
 
-// === [신규] 전체 UI 렌더링 ===
 function renderAll() {
   renderLayersList();
   renderCanvas();
@@ -207,7 +233,6 @@ function renderAll() {
   updateAddModuleHint();
 }
 
-// === [수정] 레이어 패널 렌더링 (우선순위 입력 방식) ===
 function renderLayersList() {
   const list = document.getElementById('layer-list');
   if (!list) return;
@@ -237,7 +262,6 @@ function renderLayersList() {
   `).join('');
 }
 
-// === [수정] 캔버스 렌더링 - 좌표 기반 및 전역 Aspect Ratio ===
 function renderCanvas() {
   const viewport = document.getElementById('canvas-viewport');
   if (!viewport) return;
@@ -258,9 +282,9 @@ function renderCanvas() {
     const isLocked = layer.isLocked;
     const opacityStyle = (!isActive && dimInactiveLayers) ? 'opacity: 0.4;' : '';
     
-    // [신규] Grid 맵 생성하여 좌표 계산
+    let positions = {};
     if (currentView === 'desktop') {
-      createGridMap(layer);
+      positions = calculateGridPositions(layer);
     }
     
     const order = currentView === 'desktop' ? layer.desktopOrder : layer.mobileOrder;
@@ -283,6 +307,8 @@ function renderCanvas() {
       let innerHTML = '';
       const moduleType = moduleData.type || 'box';
       let moduleFlexStyles = '';
+      
+      const moduleName = moduleData.name || `M${moduleData.id}`;
             
       if (moduleType === 'image') { 
         innerHTML = `<img src="https://via.placeholder.com/${desktopColSpan * 100}x${moduleData.row * 50}" alt="placeholder" class="module-content image">`; 
@@ -306,13 +332,11 @@ function renderCanvas() {
       const selectedClass = (showSelection && isSelected) ? 'selected' : '';
       const groupedClass = (showSelection && selectedGroupId && moduleData.groupId === selectedGroupId && !isSelected) ? 'grouped' : '';
       
-      // [수정] 전역 aspect-ratio 적용
       const aspectStyle = globalAspectRatio ? `aspect-ratio: ${col} / ${moduleData.row};` : '';
       const rowStyle = `span ${moduleData.row}`;
       
-      // [신규] 좌표가 있으면 명시적 배치
-      const gridPlacement = (moduleData.gridX !== undefined && moduleData.gridY !== undefined && currentView === 'desktop') 
-        ? `grid-column-start: ${moduleData.gridX + 1}; grid-row-start: ${moduleData.gridY + 1};` 
+      const gridPlacement = (positions[moduleData.id] && currentView === 'desktop') 
+        ? `grid-column-start: ${positions[moduleData.id].gridX + 1}; grid-row-start: ${positions[moduleData.id].gridY + 1};` 
         : '';
       
       const backgroundStyle = (moduleType === 'box') ? `background: ${bgColor};` : '';
@@ -327,7 +351,7 @@ function renderCanvas() {
            ondragover="handleDragOver(event)"
            ondrop="handleDrop(${layer.id}, ${i}, event)">
         ${innerHTML} 
-        <div class="module-info">${moduleData.col}×${moduleData.row}</div>
+        <div class="module-info">${moduleName} (${moduleData.col}×${moduleData.row})</div>
         ${showWarning ? '<div class="module-warning">!</div>' : ''}
         <button class="module-delete" onclick="deleteModule(${layer.id}, ${moduleData.id}, event)">×</button>
         <div class="module-drag-handle" 
@@ -339,7 +363,6 @@ function renderCanvas() {
       </div>
     `}).join('');
     
-    // [신규] 전역 aspect-ratio 클래스 적용
     const aspectRatioClass = globalAspectRatio ? 'aspect-ratio-enabled' : '';
     
     return `
@@ -354,7 +377,6 @@ function renderCanvas() {
   }).join('');
 }
 
-// === [신규] 레이어 우선순위 관리 함수 ===
 function updateLayerPriority(event, layerId) {
   event.stopPropagation();
   const layer = layers.find(l => l.id === layerId);
@@ -377,7 +399,6 @@ function normalizeLayerPriorities() {
   });
 }
 
-// === [신규] 레이어 관리 함수 ===
 function addLayer() {
   const newName = `Layer ${layers.length + 1}`;
   const newPriority = layers.length > 0 ? Math.max(...layers.map(l => l.priority)) + 1 : 0;
@@ -480,7 +501,6 @@ function toggleLayerLock(event, layerId) {
   saveState();
 }
 
-// === [수정] 모듈 관리 함수 (Aspect Ratio 제거) ===
 function addCustomModule() {
   const layer = getActiveLayer();
   if (!layer) { showToast('활성 레이어가 없습니다.'); return; }
@@ -496,7 +516,9 @@ function addCustomModule() {
   
   const newModule = { 
     col, row, color, transparent, borderColor, borderWidth, 
-    mobileCol: null, id: Date.now(),
+    mobileCol: null, 
+    id: Date.now(),
+    name: `M${moduleCounter++}`,
     type: type, 
     groupId: null,
     gridX: null,
@@ -517,11 +539,13 @@ function addCustomModule() {
     layer.mobileOrder.push(newModule.id);
   }
   
+  recalculateAllPositions(layer);
+  
   document.getElementById('custom-transparent').checked = false;
   toggleColorPicker('custom', false);
   document.getElementById('custom-border-width').value = 0;
 
-  showToast(`${col}×${row} ${type} 모듈이 ${layer.name}에 추가됨`);
+  showToast(`${newModule.name} (${col}×${row}) 추가됨`);
   renderCanvas();
   updateStats();
   updateCode();
@@ -564,6 +588,9 @@ function deleteModule(layerId, moduleId, event) {
     selectedModuleId = null;
     updateEditPanel();
   }
+  
+  recalculateAllPositions(layer);
+  
   renderCanvas();
   updateStats();
   updateCode();
@@ -576,7 +603,6 @@ function deleteSelectedModule() {
   deleteModule(moduleInfo.layer.id, moduleInfo.module.id, new Event('click'));
 }
 
-// === [수정] 스플릿 함수 - 좌표 기반 ===
 function splitSelectedModule() {
   const moduleInfo = getSelectedModule();
   if (!moduleInfo) { showToast('분할할 모듈을 먼저 선택하세요.'); return; }
@@ -594,8 +620,11 @@ function splitSelectedModule() {
     return;
   }
 
-  // Grid 맵 생성하여 현재 좌표 파악
-  createGridMap(layer);
+  if (module.gridX === null || module.gridX === undefined || 
+      module.gridY === null || module.gridY === undefined) {
+    recalculateAllPositions(layer);
+  }
+  
   if (module.gridX === undefined || module.gridY === undefined) {
     showToast('모듈 좌표를 계산할 수 없습니다. 다시 시도하세요.');
     return;
@@ -610,19 +639,19 @@ function splitSelectedModule() {
   let newModules = [];
   let newModuleIds = [];
 
-  // 좌표 기반으로 새 모듈 생성
-  let currentGridX, currentGridY;
-  currentGridY = module.gridY;
+  let currentGridY = module.gridY;
   
   for (let r = 0; r < v; r++) { 
     const newRow = baseRow + (r < remainderRow ? 1 : 0);
-    currentGridX = module.gridX;
+    let currentGridX = module.gridX;
+    
     for (let c = 0; c < h; c++) { 
       const newCol = baseCol + (c < remainderCol ? 1 : 0);
       
       const newModule = {
         ...deepCopy(module),
         id: Date.now() + (r * h + c),
+        name: `${module.name}-${r * h + c + 1}`,
         col: newCol, 
         row: newRow, 
         groupId: newGroupId,
@@ -636,33 +665,21 @@ function splitSelectedModule() {
       
       newModules.push(newModule);
       newModuleIds.push(newModule.id);
-      currentGridX += newCol; // 다음 X좌표
+      currentGridX += newCol;
     }
-    currentGridY += newRow; // 다음 Y좌표
+    currentGridY += newRow;
   }
 
-  // 기존 모듈 제거 및 새 모듈 추가
   const originalIndex = layer.modules.findIndex(m => m.id === module.id);
   if (originalIndex > -1) { 
     layer.modules.splice(originalIndex, 1, ...newModules); 
   }
   
-  // 데스크톱 순서 업데이트
   const desktopOrderIndex = layer.desktopOrder.indexOf(module.id);
   if (desktopOrderIndex > -1) { 
     layer.desktopOrder.splice(desktopOrderIndex, 1, ...newModuleIds); 
   }
   
-  // [신규] 좌표 기반으로 순서 정렬 (중요)
-  layer.desktopOrder.sort((a, b) => {
-    const modA = layer.modules.find(m => m.id === a);
-    const modB = layer.modules.find(m => m.id === b);
-    if (!modA || !modB || modA.gridY === undefined || modB.gridY === undefined) return 0;
-    if (modA.gridY !== modB.gridY) return modA.gridY - modB.gridY;
-    return modA.gridX - modB.gridX;
-  });
-  
-  // 모바일 순서도 업데이트
   const mobileOrderIndex = layer.mobileOrder.indexOf(module.id);
   if (mobileOrderIndex > -1) { 
     layer.mobileOrder.splice(mobileOrderIndex, 1, ...newModuleIds); 
@@ -670,14 +687,13 @@ function splitSelectedModule() {
 
   selectedModuleId = null;
   updateEditPanel();
-  showToast(`${module.col}x${module.row} 모듈을 ${h}x${v}로 분할했습니다.`);
+  showToast(`${module.name}을 ${h}×${v}로 분할했습니다.`);
   renderCanvas();
   updateStats();
   updateCode();
   saveState();
 }
 
-// === [신규] Merge 기능 추가 ===
 function mergeSelectedModules() {
   const moduleInfo = getSelectedModule();
   if (!moduleInfo) { 
@@ -692,23 +708,22 @@ function mergeSelectedModules() {
     return;
   }
   
-  // 같은 그룹의 모듈들 찾기
   const groupModules = layer.modules.filter(m => m.groupId === groupId);
   if (groupModules.length < 2) {
     showToast('병합할 모듈이 2개 이상 필요합니다.');
     return;
   }
   
-  // Grid 맵 생성하여 좌표 파악
-  createGridMap(layer);
+  if (groupModules.some(m => m.gridX === null || m.gridY === null)) {
+    recalculateAllPositions(layer);
+  }
   
-  // 병합 영역 계산
   let minX = Infinity, minY = Infinity;
   let maxX = -Infinity, maxY = -Infinity;
   let moduleCount = 0;
   
   groupModules.forEach(m => {
-    if (m.gridX !== undefined && m.gridY !== undefined) {
+    if (m.gridX !== undefined && m.gridY !== undefined && m.gridX !== null && m.gridY !== null) {
       minX = Math.min(minX, m.gridX);
       minY = Math.min(minY, m.gridY);
       maxX = Math.max(maxX, m.gridX + m.col);
@@ -722,44 +737,32 @@ function mergeSelectedModules() {
     return;
   }
   
-  // 새 병합 모듈 생성
   const mergedModule = {
-    ...deepCopy(groupModules[0]), // 첫 번째 모듈 속성 상속
+    ...deepCopy(groupModules[0]),
     id: Date.now(),
+    name: groupModules[0].name.replace(/-\d+$/, ''),
     col: maxX - minX,
     row: maxY - minY,
     gridX: minX,
     gridY: minY,
-    groupId: null // 그룹 해제
+    groupId: null
   };
   
-  // 기존 모듈들 제거
   const idsToRemove = groupModules.map(m => m.id);
   layer.modules = layer.modules.filter(m => !idsToRemove.includes(m.id));
   layer.modules.push(mergedModule);
   
-  // 순서 업데이트
   const firstIndex = Math.min(...idsToRemove.map(id => layer.desktopOrder.indexOf(id)).filter(i => i > -1));
   layer.desktopOrder = layer.desktopOrder.filter(id => !idsToRemove.includes(id));
-  if (firstIndex !== Infinity) {
+  if (firstIndex !== Infinity && firstIndex >= 0) {
     layer.desktopOrder.splice(firstIndex, 0, mergedModule.id);
   } else {
     layer.desktopOrder.push(mergedModule.id);
   }
   
-  // 좌표순으로 다시 정렬
-  layer.desktopOrder.sort((a, b) => {
-    const modA = layer.modules.find(m => m.id === a);
-    const modB = layer.modules.find(m => m.id === b);
-    if (!modA || !modB || modA.gridY === undefined || modB.gridY === undefined) return 0;
-    if (modA.gridY !== modB.gridY) return modA.gridY - modB.gridY;
-    return modA.gridX - modB.gridX;
-  });
-  
-  // 모바일 순서 업데이트
   layer.mobileOrder = layer.mobileOrder.filter(id => !idsToRemove.includes(id));
   const mobileFirstIndex = Math.min(...idsToRemove.map(id => layer.mobileOrder.indexOf(id)).filter(i => i > -1));
-  if (mobileFirstIndex !== Infinity) {
+  if (mobileFirstIndex !== Infinity && mobileFirstIndex >= 0) {
     layer.mobileOrder.splice(mobileFirstIndex, 0, mergedModule.id);
   } else {
     layer.mobileOrder.push(mergedModule.id);
@@ -773,7 +776,6 @@ function mergeSelectedModules() {
   updateCode();
   saveState();
 }
-
 
 function clearActiveLayer() {
   const layer = getActiveLayer();
@@ -793,7 +795,6 @@ function clearActiveLayer() {
   }
 }
 
-// === [수정] 모듈 드래그 앤 드롭 (마우스) ===
 function handleDragStart(layerId, moduleId, moduleIndexInOrder, event) {
     if (event.type === 'mousedown') {
         event.preventDefault(); 
@@ -843,7 +844,7 @@ function handleDrop(targetLayerId, targetModuleIndexInOrder, event) {
   const groupId = draggedModule.groupId;
   let idsToMove = [];
   
-  if (groupId && currentView === 'desktop') { // 데스크톱 뷰에서만 그룹 D&D 허용
+  if (groupId && currentView === 'desktop') {
       idsToMove = order.filter(id => {
           const m = layer.modules.find(mod => mod.id === id);
           return m && m.groupId === groupId;
@@ -852,13 +853,14 @@ function handleDrop(targetLayerId, targetModuleIndexInOrder, event) {
       idsToMove.push(draggedId);
   }
 
-  if (targetModuleIndexInOrder === null) { // 캔버스 빈 공간에 드롭 (마지막으로 이동)
+  if (targetModuleIndexInOrder === null) {
       let newOrder = order.filter(id => !idsToMove.includes(id));
       newOrder = [...newOrder, ...idsToMove];
       
       if (currentView === 'desktop') {
           layer.desktopOrder = newOrder;
           if (layer.settings.mobileOrderLocked) layer.mobileOrder = [...newOrder];
+          recalculateAllPositions(layer);
       } else {
           layer.mobileOrder = newOrder;
       }
@@ -877,12 +879,6 @@ function handleDrop(targetLayerId, targetModuleIndexInOrder, event) {
   let newOrder = order.filter(id => !idsToMove.includes(id));
   let newDropIndex = newOrder.indexOf(targetId);
   
-  if (draggedModuleInfo.moduleIndexInOrder < targetModuleIndexInOrder) {
-      // newDropIndex += 1; // targetId '뒤'에 드롭
-  } else {
-      // targetId '앞'에 드롭
-  }
-  // 타겟 모듈 '앞'에 드롭하는 것으로 통일
   newOrder.splice(newDropIndex, 0, ...idsToMove);
 
   if (currentView === 'desktop') {
@@ -890,6 +886,7 @@ function handleDrop(targetLayerId, targetModuleIndexInOrder, event) {
     if (layer.settings.mobileOrderLocked) {
       layer.mobileOrder = [...layer.desktopOrder];
     }
+    recalculateAllPositions(layer);
   } else {
     layer.mobileOrder = newOrder;
   }
@@ -899,7 +896,6 @@ function handleDrop(targetLayerId, targetModuleIndexInOrder, event) {
   draggedModuleInfo = null;
 }
 
-// === [수정] 모듈 터치 드래그 핸들러 (모바일) ===
 function handleModuleTouchStart(event, layerId, moduleId, index) {
     event.stopPropagation();
     const layer = layers.find(l => l.id === layerId);
@@ -949,7 +945,6 @@ function handleDocumentTouchEnd(event) {
     document.removeEventListener('touchend', handleDocumentTouchEnd);
 }
 
-// === [수정] 코드 생성 - 전역 Aspect Ratio 반영 ===
 function generateHTML() {
   let html = `<!DOCTYPE html>
 <html lang="ko">
@@ -971,6 +966,7 @@ function generateHTML() {
       const m = layer.modules.find(mod => mod.id === id);
       if (!m) return '';
       const groupClass = m.groupId ? ` group-${m.groupId}` : '';
+      const moduleName = m.name || `M${m.id}`;
       
       let innerContent = '';
       if (m.type === 'image') {
@@ -979,7 +975,7 @@ function generateHTML() {
         innerContent = `      <p>${escapeHTML(m.textContent || '')}</p>`;
       }
 
-      return `    <div class="module module-${m.id} type-${m.type || 'box'}${groupClass}">
+      return `    <div class="module module-${moduleName} type-${m.type || 'box'}${groupClass}">
 ${innerContent}
     </div>`;
     }).join('\n')}
@@ -1037,7 +1033,6 @@ function generateCSS() {
   word-break: break-word;
 }
 `;
-  // [신규] 전역 Aspect Ratio CSS
   if (globalAspectRatio) {
     css += `
 .grid-container.aspect-ratio-enabled .module {
@@ -1063,10 +1058,10 @@ function generateCSS() {
       const outline = m.borderWidth > 0 ? `\n  outline: ${m.borderWidth}px solid ${m.borderColor};\n  outline-offset: -${m.borderWidth}px;` : '';
       const bgStyle = (m.type === 'box' || !m.type) ? `background: ${bg};` : '';
       
-      // [수정] 전역 Aspect Ratio 반영
       const aspect = globalAspectRatio ? `\n  aspect-ratio: ${col} / ${m.row};` : '';
       const row = `span ${m.row}`;
-      const minHeight = globalAspectRatio ? '\n  min-height: 0;' : ''; // aspect-ratio 있을 시 min-height 제거
+      const minHeight = globalAspectRatio ? '\n  min-height: 0;' : '';
+      const moduleName = m.name || `M${m.id}`;
 
       let moduleSpecificStyles = '';
       if (m.type === 'box') {
@@ -1076,14 +1071,14 @@ function generateCSS() {
   padding: 0;`;
       }
 
-      css += `.module-${m.id} {
+      css += `.module-${moduleName} {
   grid-column: span ${col};
   grid-row: ${row};
   ${bgStyle}${outline}${aspect}${moduleSpecificStyles}${minHeight}
 }\n`;
 
       if (m.type === 'box') {
-        css += `.module-${m.id} p {
+        css += `.module-${moduleName} p {
   text-align: ${m.textAlign || 'left'};
   color: ${m.fontColor || '#000000'};
   font-size: ${m.fontSize ? m.fontSize + 'px' : '14px'};
@@ -1116,13 +1111,13 @@ function generateCSS() {
       if (!m) return '';
       const mobileSpan = getMobileSpan(m, layer);
       const comment = m.mobileCol !== null ? '/*수동*/' : `/*자동:min(${m.col},${settings.targetColumns})*/`;
+      const moduleName = m.name || `M${m.id}`;
       
-      // [수정] 모바일에서도 전역 Aspect Ratio 반영
       const aspect = globalAspectRatio ? `\n    aspect-ratio: ${mobileSpan} / ${m.row};` : '';
       const row = `span ${m.row}`;
       const minHeight = globalAspectRatio ? '\n    min-height: 0;' : '';
 
-      css += `  .module-${m.id} {
+      css += `  .module-${moduleName} {
     grid-column: span ${mobileSpan}; ${comment}
     grid-row: ${row};
     order: ${i};${aspect}${minHeight}
@@ -1134,7 +1129,6 @@ function generateCSS() {
   return css;
 }
 
-// === [수정] UI 컨트롤 및 이벤트 핸들러 ===
 function init() {
   function addSettingsListener(elementId, eventType, settingKey, valueFn, doSaveState = false, doRender = true) {
     const element = document.getElementById(elementId);
@@ -1143,6 +1137,9 @@ function init() {
       const layer = getActiveLayer();
       if (layer) {
         layer.settings[settingKey] = valueFn(e);
+        if (settingKey === 'desktopColumns') {
+          recalculateAllPositions(layer);
+        }
         if (doRender) renderCanvas();
         updateStats();
         updateModeHint();
@@ -1162,7 +1159,6 @@ function init() {
   addSettingsListener('target-columns', 'change', 'targetColumns', e => clamp(parseInt(e.target.value) || 1, 1, 12), true);
   addSettingsListener('mobile-order-lock', 'change', 'mobileOrderLocked', e => e.target.checked, true, false); 
   
-  // [신규] 전역 Aspect Ratio 리스너
   const globalAspectEl = document.getElementById('global-aspect-ratio');
   if (globalAspectEl) {
     globalAspectEl.addEventListener('change', (e) => {
@@ -1204,7 +1200,13 @@ function init() {
     element.addEventListener(eventType, e => {
       const moduleInfo = getSelectedModule();
       if (moduleInfo) {
-        moduleInfo.module[property] = valueFn(e, moduleInfo.layer, moduleInfo.module); 
+        const oldValue = moduleInfo.module[property];
+        moduleInfo.module[property] = valueFn(e, moduleInfo.layer, moduleInfo.module);
+        
+        if ((property === 'col' || property === 'row') && oldValue !== moduleInfo.module[property]) {
+          recalculateAllPositions(moduleInfo.layer);
+        }
+        
         renderCanvas();
         
         if(property === 'col' || property === 'mobileCol') updateMobileSpanHint();
@@ -1470,5 +1472,4 @@ function showToast(message) {
   setTimeout(() => toast.style.display = 'none', 3000);
 }
 
-// --- DOM 로드 후 초기화 ---
 window.addEventListener('DOMContentLoaded', init);
